@@ -52,16 +52,12 @@ function AppContent() {
     }
   }, [darkMode]);
 
-  // Clean up object URLs
-  useEffect(() => {
-    return () => {
-      if (uploadedFile?.previewUrl) {
-        URL.revokeObjectURL(uploadedFile.previewUrl);
-      }
-    };
-  }, [uploadedFile]);
-
   const handleFileSelect = async (file: File) => {
+    // Manually cleanup previous URL if it exists
+    if (uploadedFile?.previewUrl) {
+        URL.revokeObjectURL(uploadedFile.previewUrl);
+    }
+
     const previewUrl = URL.createObjectURL(file);
     const mimeType = file.type || (file.name.endsWith('.csv') ? 'text/csv' : 'text/plain');
 
@@ -128,6 +124,9 @@ function AppContent() {
   };
 
   const handleReset = () => {
+    if (uploadedFile?.previewUrl) {
+        URL.revokeObjectURL(uploadedFile.previewUrl);
+    }
     setAppState(AppState.IDLE);
     setUploadedFile(null);
     setAnalysisResult(null);
@@ -142,7 +141,7 @@ function AppContent() {
     // Construct a mock UploadedFile for display purposes
     const mockFile: UploadedFile = {
       file: new File([], fileName, { type: fileType }),
-      previewUrl: '', 
+      previewUrl: '', // No blob URL needed for history view usually, unless we stored the blob (which we don't in this demo)
       mimeType: fileType,
       textContent: "Report loaded from history." 
     };

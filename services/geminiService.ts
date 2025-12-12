@@ -232,6 +232,21 @@ export const createChatSession = (resultContext?: AnalysisResult) => {
   });
 };
 
+export const identifySpecialist = async (medicalContext: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: `Based on this medical summary: "${medicalContext}", identify the single best type of medical specialist to see (e.g. "Cardiologist", "Dermatologist", "General Practitioner"). 
+        
+        Return ONLY the specialist name. No other text.`,
+        config: { thinkingConfig: { thinkingBudget: 0 } }
+    });
+    return response.text?.trim() || "Doctors";
+  } catch (e) {
+    return "Doctors";
+  }
+};
+
 export const findNearbyDoctors = async (medicalContext: string, lat: number, lng: number): Promise<GenerateContentResponse> => {
   return await ai.models.generateContent({
     model: MODEL_NAME,
@@ -244,6 +259,7 @@ export const findNearbyDoctors = async (medicalContext: string, lat: number, lng
     1. A helpful, brief introductory sentence recommending the type of specialist they should see (e.g. "You should see a Dermatologist...").
     2. A list of the places found.`,
     config: {
+      thinkingConfig: { thinkingBudget: 0 },
       tools: [{ googleMaps: {} }],
       toolConfig: {
         retrievalConfig: {
