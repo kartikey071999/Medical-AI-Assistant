@@ -1,12 +1,16 @@
 import { useState, useCallback } from 'react';
 import { AppState, UploadedFile, AnalysisResult } from '../types';
 import { analyzeMedicalReport } from '../services/geminiService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const useAnalysis = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  
+  // Access current language
+  const { language } = useLanguage();
 
   const processFile = useCallback(async (file: File) => {
     // Cleanup previous URL if exists to prevent memory leaks
@@ -57,11 +61,12 @@ export const useAnalysis = () => {
       setErrorMessage("Failed to read file.");
       setAppState(AppState.ERROR);
     }
-  }, [uploadedFile]);
+  }, [uploadedFile, language]); // Add language as dependency
 
   const runGeminiAnalysis = async (input: { base64?: string, textContent?: string, mimeType: string }) => {
     try {
-      const result = await analyzeMedicalReport(input);
+      // Pass the current language to the service
+      const result = await analyzeMedicalReport(input, language);
       setAnalysisResult(result);
       setAppState(AppState.SUCCESS);
       return result;

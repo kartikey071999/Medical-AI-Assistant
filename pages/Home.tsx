@@ -3,6 +3,7 @@ import { AppState, UploadedFile, AnalysisResult } from '../types';
 import { FileUpload } from '../components/FileUpload';
 import { AnalysisView } from '../components/AnalysisView';
 import { LogoIcon } from '../components/Icons';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface HomeProps {
   appState: AppState;
@@ -23,6 +24,8 @@ export const Home: React.FC<HomeProps> = ({
   onReset,
   onAskAi
 }) => {
+  const { t } = useLanguage();
+
   return (
     <>
       {appState === AppState.IDLE && (
@@ -32,10 +35,10 @@ export const Home: React.FC<HomeProps> = ({
               AI-Powered Diagnostics Assistant
             </span>
             <h1 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 dark:text-white mb-6 leading-tight">
-              Understand your health <br/> with <span className="text-teal-600 dark:text-teal-400">clarity.</span>
+              {t('hero_title')}
             </h1>
             <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Upload your medical reports, lab results, or X-rays. Vitalis AI analyzes them instantly.
+              {t('hero_subtitle')}
             </p>
           </div>
 
@@ -45,17 +48,17 @@ export const Home: React.FC<HomeProps> = ({
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto text-center">
             <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
               <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-400 text-xl">📄</div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">Multi-Format</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">{t('feat_multi')}</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">Upload PDF, Image, or CSV files.</p>
             </div>
             <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
               <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400 text-xl">🔍</div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">Deep Research</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">{t('feat_research')}</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">AI-backed medical context analysis.</p>
             </div>
             <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
               <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-teal-600 dark:text-teal-400 text-xl">🛡️</div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">Secure</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">{t('feat_secure')}</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">Private client-side processing.</p>
             </div>
           </div>
@@ -69,9 +72,9 @@ export const Home: React.FC<HomeProps> = ({
             <div className="absolute inset-0 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
             <LogoIcon className="absolute inset-0 m-auto w-10 h-10 text-teal-500 animate-pulse" />
           </div>
-          <h2 className="text-2xl font-serif font-bold text-slate-800 dark:text-white mb-3">Analyzing Report...</h2>
+          <h2 className="text-2xl font-serif font-bold text-slate-800 dark:text-white mb-3">{t('analyzing_title')}</h2>
           <p className="text-slate-500 dark:text-slate-400 max-w-md text-center">
-            Vitalis is reading the document, identifying medical terms, and cross-referencing diagnostic markers.
+            {t('analyzing_desc')}
           </p>
         </div>
       )}
@@ -83,13 +86,13 @@ export const Home: React.FC<HomeProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Analysis Failed</h2>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t('analyzing_failed')}</h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8">{errorMessage}</p>
           <button 
             onClick={onReset}
             className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors font-medium shadow-lg hover:shadow-xl"
           >
-            Try Again
+            {t('try_again')}
           </button>
         </div>
       )}

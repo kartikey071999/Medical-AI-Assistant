@@ -12,13 +12,28 @@ interface AnalysisInput {
   mimeType: string;
 }
 
+// Maps for language names to ensure AI understands
+const LANGUAGE_NAMES = {
+  en: "English",
+  hi: "Hindi",
+  nl: "Dutch",
+  ta: "Tamil"
+};
+
 export const analyzeMedicalReport = async (
-  input: AnalysisInput
+  input: AnalysisInput,
+  language: string = 'en'
 ): Promise<AnalysisResult> => {
   
+  const targetLang = LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] || "English";
+
   const systemPrompt = `
     You are Vitalis, a world-class advanced medical AI assistant. 
     Your goal is to analyze medical documents and visual inputs uploaded by the user.
+    
+    CRITICAL INSTRUCTION:
+    Generate ALL text content (summary, findings interpretations, research context, advice) in ${targetLang} language.
+    However, keep technical keys (like JSON keys) in English.
     
     ACCEPTED INPUTS:
     1. Medical Reports (PDF, Images of documents): Lab results, prescriptions, discharge summaries.
@@ -31,7 +46,7 @@ export const analyzeMedicalReport = async (
     OUTPUT FORMAT:
     Provide a professional medical analysis in JSON format.
     
-    If the input is NOT related to health/medicine (e.g., a picture of a car, a landscape, a non-medical document), return a polite error in the 'summary' field explaining that you can only analyze medical data, and return empty arrays for other fields.
+    If the input is NOT related to health/medicine (e.g., a picture of a car, a landscape, a non-medical document), return a polite error in the 'summary' field (in ${targetLang}) explaining that you can only analyze medical data, and return empty arrays for other fields.
     
     FOR DOCUMENTS:
     Extract specific data points (findings). Identify every distinct medical parameter.
@@ -44,7 +59,7 @@ export const analyzeMedicalReport = async (
     - Reference Range: "N/A" for visual descriptions, or describe the normal appearance (e.g. "Smooth skin").
     
     Assign a status: 'Normal', 'Warning' (slightly out of range/notable), 'Critical' (urgent/severely out of range), or 'Unknown'.
-    Provide a short, clear interpretation for each finding.
+    Provide a short, clear interpretation for each finding in ${targetLang}.
   `;
 
   // Construct parts based on input type
@@ -82,7 +97,7 @@ export const analyzeMedicalReport = async (
           properties: {
             summary: { 
               type: Type.STRING, 
-              description: "A patient-friendly summary of the overall health status based on the report or image." 
+              description: `A patient-friendly summary of the overall health status in ${targetLang}.` 
             },
             findings: {
               type: Type.ARRAY,
@@ -99,23 +114,23 @@ export const analyzeMedicalReport = async (
                     enum: ["Normal", "Warning", "Critical", "Unknown"],
                     description: "Clinical assessment of the value."
                   },
-                  interpretation: { type: Type.STRING, description: "Brief explanation of what this result means." }
+                  interpretation: { type: Type.STRING, description: `Brief explanation of what this result means in ${targetLang}.` }
                 },
                 required: ["parameter", "status", "interpretation", "value"]
               }
             },
             researchContext: { 
               type: Type.STRING,
-              description: "Detailed medical context about the conditions or markers found. Explain the 'why'."
+              description: `Detailed medical context about the conditions or markers found in ${targetLang}. Explain the 'why'.`
             },
             patientAdvice: { 
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: "List of actionable steps or questions for the doctor."
+              description: `List of actionable steps or questions for the doctor in ${targetLang}.`
             },
             disclaimer: { 
               type: Type.STRING,
-              description: "Standard medical AI disclaimer."
+              description: `Standard medical AI disclaimer in ${targetLang}.`
             }
           },
           required: ["summary", "findings", "researchContext", "patientAdvice"]
@@ -140,7 +155,9 @@ export const analyzeMedicalReport = async (
   }
 };
 
-export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckResult> => {
+export const checkSymptoms = async (input: SymptomInput, language: string = 'en'): Promise<SymptomCheckResult> => {
+  const targetLang = LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] || "English";
+
   const prompt = `
     Act as an experienced triage nurse and medical AI. 
     Analyze the following patient inputs and provide a symptom assessment.
@@ -157,6 +174,9 @@ export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckRe
     1. Identify 2-3 likely conditions based on the symptoms.
     2. Assess the overall severity level (Low, Medium, High). High means immediate medical attention is needed.
     3. Provide clear self-care recommendations and specific advice on when to see a doctor.
+
+    OUTPUT LANGUAGE: ${targetLang}
+    All descriptions, recommendations, and advice MUST be in ${targetLang}.
   `;
 
   try {
@@ -176,7 +196,7 @@ export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckRe
                 properties: {
                   name: { type: Type.STRING },
                   probability: { type: Type.STRING, enum: ["Low", "Medium", "High"] },
-                  description: { type: Type.STRING },
+                  description: { type: Type.STRING, description: `In ${targetLang}` },
                   matching_symptoms: { type: Type.ARRAY, items: { type: Type.STRING } }
                 }
               }
@@ -185,12 +205,12 @@ export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckRe
             recommendations: {
               type: Type.OBJECT,
               properties: {
-                self_care: { type: Type.ARRAY, items: { type: Type.STRING } },
-                doctor_visit: { type: Type.STRING },
-                emergency: { type: Type.STRING }
+                self_care: { type: Type.ARRAY, items: { type: Type.STRING, description: `In ${targetLang}` } },
+                doctor_visit: { type: Type.STRING, description: `In ${targetLang}` },
+                emergency: { type: Type.STRING, description: `In ${targetLang}` }
               }
             },
-            disclaimer: { type: Type.STRING }
+            disclaimer: { type: Type.STRING, description: `In ${targetLang}` }
           }
         }
       }
@@ -208,11 +228,16 @@ export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckRe
 export const createChatSession = (
   userProfile?: UserProfile | null, 
   previousHistory: ChatMessage[] = [],
-  currentAnalysis?: AnalysisResult
+  currentAnalysis?: AnalysisResult,
+  language: string = 'en'
 ) => {
+  const targetLang = LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] || "English";
   
   // 1. Build System Instruction with User Context
   let systemInstruction = `You are Vitalis, a dedicated and specialized medical AI assistant.
+  
+  LANGUAGE INSTRUCTION:
+  You must ALWAYS respond in ${targetLang}.
   
   STRICT SCOPE OF OPERATION:
   You must EXCLUSIVELY answer questions related to:
@@ -230,7 +255,7 @@ export const createChatSession = (
   - Do NOT engage in general chit-chat unrelated to the user's well-being.
   
   REFUSAL PROTOCOL:
-  If a user asks about an out-of-scope topic, you must politely but firmly refuse.
+  If a user asks about an out-of-scope topic, you must politely but firmly refuse in ${targetLang}.
   Example Refusal: "I am Vitalis, a specialized medical assistant. I can only assist with health-related inquiries."
   
   Response Guidelines:
@@ -259,11 +284,6 @@ export const createChatSession = (
     }));
 
   // 3. Handle Current Report Context
-  // Instead of a system instruction which is static, if there is a *new* analysis result,
-  // we treat it as a piece of context injected into the chat history.
-  // Note: We don't need to do anything here if the UI has already added a message about the report.
-  // But if this is a fresh session start with a report, we might want to guide the model.
-  
   if (currentAnalysis) {
      // We append the analysis context as a "user provided context" or "model thought" to guide the next response
      // Note: In strict chat mode, we rely on the message history. 
