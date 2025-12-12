@@ -1,4 +1,4 @@
-import { SavedReport, UserProfile, AnalysisResult, DailyLogEntry, EmergencyProfile, TimelineEvent } from '../types';
+import { SavedReport, UserProfile, AnalysisResult, DailyLogEntry, EmergencyProfile, TimelineEvent, ChatMessage } from '../types';
 
 // Keys for LocalStorage
 const USERS_KEY = 'vitalis_users';
@@ -6,6 +6,7 @@ const REPORTS_KEY = 'vitalis_reports';
 const LOGS_KEY = 'vitalis_daily_logs';
 const EMERGENCY_KEY = 'vitalis_emergency_info';
 const CURRENT_USER_KEY = 'vitalis_current_user_id';
+const CHAT_HISTORY_KEY = 'vitalis_chat_history';
 
 // Simulating API Latency
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -41,6 +42,28 @@ export const setCurrentUserId = (id: string | null) => {
   } else {
     localStorage.removeItem(CURRENT_USER_KEY);
   }
+};
+
+// --- Chat Memory Management (New) ---
+
+export const saveUserChatHistory = async (userId: string, messages: ChatMessage[]): Promise<void> => {
+  // No delay for chat to keep it snappy
+  const allChats = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '{}');
+  // Keep only last 50 messages to manage storage size
+  const prunedMessages = messages.slice(-50);
+  allChats[userId] = prunedMessages;
+  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(allChats));
+};
+
+export const getUserChatHistory = async (userId: string): Promise<ChatMessage[]> => {
+  const allChats = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '{}');
+  return allChats[userId] || [];
+};
+
+export const clearUserChatHistory = async (userId: string): Promise<void> => {
+  const allChats = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '{}');
+  delete allChats[userId];
+  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(allChats));
 };
 
 // --- Report Management ---

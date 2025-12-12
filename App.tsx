@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useAnalysis } from './hooks/useAnalysis';
 import { useChat } from './hooks/useChat';
 import { AppLayout } from './layouts/AppLayout';
@@ -11,11 +11,14 @@ import { HealthDiary } from './components/HealthDiary';
 import { EmergencyCard } from './components/EmergencyCard';
 
 function AppContent() {
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'symptoms' | 'dashboard' | 'profile' | 'diary' | 'emergency'>('home');
   
   // Custom Hooks for Feature Logic
   const analysis = useAnalysis();
-  const chat = useChat(analysis.analysisResult);
+  
+  // Pass user to chat hook for persistent memory and personalized context
+  const chat = useChat(analysis.analysisResult, user);
 
   // View Handlers
   const handleViewReportFromDashboard = (result: any, fileName: string, fileType: string) => {

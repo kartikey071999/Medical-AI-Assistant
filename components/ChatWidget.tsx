@@ -25,7 +25,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (isOpen) {
+      // Small delay to ensure render before scroll
+      setTimeout(scrollToBottom, 100);
+    }
   }, [messages, isTyping, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,11 +41,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
       
-      {/* Chat Window */}
+      {/* Chat Window - Positioned absolutely to not take up flow space in the container */}
       <div 
         className={`
-          pointer-events-auto bg-white dark:bg-slate-800 w-96 max-w-[90vw] h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 transform origin-bottom-right mb-4 overflow-hidden
-          ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8 pointer-events-none'}
+          absolute bottom-20 right-0
+          pointer-events-auto bg-white dark:bg-slate-800 w-96 max-w-[90vw] h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 origin-bottom-right overflow-hidden
+          ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8 pointer-events-none invisible'}
         `}
       >
         {/* Header */}
@@ -127,7 +131,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          pointer-events-auto w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95
+          pointer-events-auto w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 relative z-10
           ${isOpen ? 'bg-slate-700 dark:bg-slate-600 text-white rotate-90' : 'bg-teal-600 text-white hover:bg-teal-700'}
         `}
       >

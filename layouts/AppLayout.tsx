@@ -69,18 +69,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       />
 
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 transition-colors duration-300 print:hidden mt-auto">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+         {/* Added md:pr-24 to ensure content clears the fixed chat widget */}
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 md:pr-24 flex flex-col md:flex-row justify-between items-center text-center md:text-left">
           <div className="mb-4 md:mb-0">
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
               <LogoIcon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               <span className="font-bold text-slate-700 dark:text-slate-200">Vitalis AI</span>
             </div>
             <p className="text-sm text-slate-400 dark:text-slate-500">© {new Date().getFullYear()} Vitalis Health Tech.</p>
           </div>
-          <div className="flex space-x-6 text-slate-400 dark:text-slate-500">
+          <div className="flex flex-wrap justify-center gap-6 text-slate-400 dark:text-slate-500">
             <button onClick={() => openLegal('terms')} className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Terms</button>
             <button onClick={() => openLegal('privacy')} className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Privacy</button>
-            <a href="https://inquisitive-cajeta-5a3397.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Portfolio</a>
+            <a href="https://inquisitive-cajeta-5a3397.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Personal Portfolio</a>
           </div>
         </div>
       </footer>

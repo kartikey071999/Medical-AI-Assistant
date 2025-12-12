@@ -1,5 +1,5 @@
-import { GoogleGenAI, GenerateContentResponse, Part, Type } from "@google/genai";
-import { AnalysisResult, SymptomInput, SymptomCheckResult, DailyLogEntry, SavedReport, HealthInsight } from '../types';
+import { GoogleGenAI, GenerateContentResponse, Part, Type, Content } from "@google/genai";
+import { AnalysisResult, SymptomInput, SymptomCheckResult, DailyLogEntry, SavedReport, HealthInsight, ChatMessage, UserProfile } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -205,27 +205,74 @@ export const checkSymptoms = async (input: SymptomInput): Promise<SymptomCheckRe
   }
 };
 
-export const createChatSession = (resultContext?: AnalysisResult) => {
-  let systemInstruction = `You are Vitalis, a helpful, empathetic, and professional medical AI assistant.
-  Your goal is to answer the user's questions about health, medicine, or their medical reports.
+export const createChatSession = (
+  userProfile?: UserProfile | null, 
+  previousHistory: ChatMessage[] = [],
+  currentAnalysis?: AnalysisResult
+) => {
   
-  Important Rules:
+  // 1. Build System Instruction with User Context
+  let systemInstruction = `You are Vitalis, a dedicated and specialized medical AI assistant.
+  
+  STRICT SCOPE OF OPERATION:
+  You must EXCLUSIVELY answer questions related to:
+  - Health and Medicine
+  - Medical Reports and Diagnostics
+  - Anatomy and Physiology
+  - Wellness, Nutrition, and Fitness
+  - Mental Health support
+  - Healthcare administration (finding doctors, understanding insurance terms)
+  
+  HARD RESTRICTIONS (ZERO TOLERANCE):
+  - Do NOT answer general knowledge questions (history, geography, pop culture, sports, etc.).
+  - Do NOT generate creative writing (poems, stories) unless specifically for medical education.
+  - Do NOT help with coding, math (unless dosage related), or technical tasks unrelated to health.
+  - Do NOT engage in general chit-chat unrelated to the user's well-being.
+  
+  REFUSAL PROTOCOL:
+  If a user asks about an out-of-scope topic, you must politely but firmly refuse.
+  Example Refusal: "I am Vitalis, a specialized medical assistant. I can only assist with health-related inquiries."
+  
+  Response Guidelines:
   1. KEEP RESPONSES VERY SHORT AND CONCISE. Aim for 2-3 sentences maximum.
   2. Be direct and instant. Do not waffle.
   3. Avoid medical jargon where possible, or explain it simply.
   4. ALWAYS remind the user that you are an AI and they should consult a doctor for definitive medical advice.`;
 
-  if (resultContext) {
-    systemInstruction += `\n\nCONTEXT: The user has uploaded a medical report or image. Here is the analysis of that input:
-    Summary: ${resultContext.summary}
-    Findings: ${JSON.stringify(resultContext.findings)}
-    Research: ${resultContext.researchContext}
+  if (userProfile) {
+    systemInstruction += `\n\nUSER CONTEXT (Remember this about the person you are talking to):
+    Name: ${userProfile.name}
+    Sex: ${userProfile.sex || 'Not specified'}
+    Medical History: ${userProfile.healthHistory?.join(', ') || 'None provided'}
     
-    Use this context to answer specific questions about their results. If they ask about a specific value (e.g. "Is my Iron low?"), refer to the findings provided above.`;
+    Use this information to personalize your responses. However, recognize that the user might also upload reports belonging to OTHERS (e.g. family members). Use context clues to determine if they are asking about themselves or the report.`;
+  }
+
+  // 2. Prepare History in Gemini Format
+  // We need to map our ChatMessage[] to Gemini's Content[]
+  // We filter out internal system messages that we might use for UI but aren't real turns
+  const history: Content[] = previousHistory
+    .filter(msg => msg.role === 'user' || msg.role === 'model')
+    .map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    }));
+
+  // 3. Handle Current Report Context
+  // Instead of a system instruction which is static, if there is a *new* analysis result,
+  // we treat it as a piece of context injected into the chat history.
+  // Note: We don't need to do anything here if the UI has already added a message about the report.
+  // But if this is a fresh session start with a report, we might want to guide the model.
+  
+  if (currentAnalysis) {
+     // We append the analysis context as a "user provided context" or "model thought" to guide the next response
+     // Note: In strict chat mode, we rely on the message history. 
+     // The UI will handle sending the initial "I have analyzed..." message.
   }
 
   return ai.chats.create({
     model: MODEL_NAME,
+    history: history,
     config: {
       systemInstruction,
     }
