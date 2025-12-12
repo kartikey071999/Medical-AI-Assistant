@@ -1,0 +1,8 @@
+{
+  "name": "Vitalis AI - Medical Assistant",
+  "description": "An advanced AI-powered medical report analyzer that helps patients understand their diagnostics, provides research context, and suggests actionable next steps using Gemini 2.5 Flash for instant analysis.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
